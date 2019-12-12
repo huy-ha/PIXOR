@@ -11,7 +11,7 @@ from datagen import get_data_loader
 from model import PIXOR
 from utils import get_model_name, load_config, get_logger, plot_bev, plot_label_map, plot_pr_curve, get_bev
 from postprocess import filter_pred, compute_matches, compute_ap
-
+from tqdm import tqdm
 
 def build_model(config, device, train=True):
     net = PIXOR(config['geometry'], config['use_bn'])
@@ -54,7 +54,7 @@ def eval_batch(config, net, loss_fn, loader, device, eval_range='all'):
     log_img_list = random.sample(range(len(loader.dataset)), 10)
 
     with torch.no_grad():
-        for i, data in enumerate(loader):
+        for i, data in enumerate(tqdm(loader)):
             tic = time.time()
             input, label_map, image_id = data
             input = input.to(device)
@@ -337,11 +337,11 @@ def experiment(exp_name, device, eval_range='all', plot=True):
                                                frame_range=config['frame_range'])
 
     #Train Set
-    train_metrics, train_precisions, train_recalls, _ = eval_batch(config, net, loss_fn, train_loader, device, eval_range)
-    print("Training mAP", train_metrics['AP'])
-    fig_name = "PRCurve_train_" + config['name']
-    legend = "AP={:.1%} @IOU=0.5".format(train_metrics['AP'])
-    plot_pr_curve(train_precisions, train_recalls, legend, name=fig_name)
+    #train_metrics, train_precisions, train_recalls, _ = eval_batch(config, net, loss_fn, train_loader, device, eval_range)
+    #print("Training mAP", train_metrics['AP'])
+    #fig_name = "PRCurve_train_" + config['name']
+    #legend = "AP={:.1%} @IOU=0.5".format(train_metrics['AP'])
+    #plot_pr_curve(train_precisions, train_recalls, legend, name=fig_name)
 
     # Val Set
     val_metrics, val_precisions, val_recalls, _ = eval_batch(config, net, loss_fn, val_loader, device, eval_range)
@@ -380,7 +380,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PIXOR custom implementation')
     parser.add_argument('mode', choices=['train', 'val', 'test'], help='name of the experiment')
     parser.add_argument('--name', required=True, help="name of the experiment")
-    parser.add_argument('--device', default='cpu', help='device to train on')
+    parser.add_argument('--device', default='cuda', help='device to train on')
     parser.add_argument('--eval_range', type=int, help="range of evaluation")
     parser.add_argument('--test_id', type=int, default=25, help="id of the image to test")
     args = parser.parse_args()
